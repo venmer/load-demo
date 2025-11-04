@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"user-service/internal/metrics"
 	"user-service/internal/models"
+
+	"github.com/gorilla/mux"
 )
 
 type UserHandler struct {
@@ -23,6 +25,7 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.db.Query("SELECT id, name, email, created_at, updated_at FROM users ORDER BY id")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
 	defer rows.Close()
@@ -46,6 +49,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
 
@@ -80,8 +84,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
+
+	metrics.UsersCreated.Inc()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -125,26 +132,31 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
 
 	result, err := h.db.Exec("DELETE FROM users WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
 
 	if rowsAffected == 0 {
 		http.Error(w, "User not found", http.StatusNotFound)
+		metrics.DatabaseErrors.Inc()
 		return
 	}
 
+	metrics.UsersDeleted.Inc()
+
 	w.WriteHeader(http.StatusNoContent)
 }
-

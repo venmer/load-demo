@@ -8,6 +8,7 @@ import (
 
 	"user-service/internal/database"
 	"user-service/internal/handlers"
+	"user-service/internal/metrics"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -31,6 +32,10 @@ func main() {
 
 	// Настройка роутера
 	r := mux.NewRouter()
+	r.Use(metrics.PrometheusMiddleware)
+
+	r.Handle("/metrics", metrics.MetricsHandler()).Methods("GET")
+
 	r.HandleFunc("/health", healthCheck).Methods("GET")
 	r.HandleFunc("/api/users", userHandler.GetUsers).Methods("GET")
 	r.HandleFunc("/api/users/{id}", userHandler.GetUser).Methods("GET")

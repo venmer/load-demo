@@ -181,3 +181,6 @@ docker-compose down
 ```bash
 docker-compose down -v
 ```
+
+### Мониторинг
+В проекте настроен экспорт метрик в prometheus
