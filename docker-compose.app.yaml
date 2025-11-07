@@ -18,6 +18,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - demo-net
 
   user-service:
     build:
@@ -37,6 +39,8 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - demo-net
 
   api-gateway:
     build:
@@ -51,8 +55,12 @@ services:
     depends_on:
       - user-service
     restart: unless-stopped
+    networks:
+      - demo-net
 
 volumes:
   postgres_data:
 
-
+networks:
+  demo-net:
+    driver: bridge

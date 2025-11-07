@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  victoria:
+    container_name: victoria-metrics
+    image: victoriametrics/victoria-metrics
+    restart: always
+    volumes:
+      - ./docker/victoria:/victoria-metrics-data
+      - ./prometheus.yml:/prometheus.yml
+    command:
+      - -promscrape.config=/prometheus.yml
+    ports:
+      - "8428:8428"
+      - "8089:8089/tcp"
+      - "8089:8089/udp"
+    networks:
+      - demo-net
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    user: root
+    volumes:
+      - ./docker/grafana/data:/var/lib/grafana/
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: "grafana-clock-panel,briangann-gauge-panel,natel-plotly-panel,grafana-simple-json-datasource"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    ports:
+      - "3000:3000"
+    networks:
+      - demo-net
+  
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: always
+    expose:
+      - 9100
+    networks:
+      - demo-net
+
+networks:
+  demo-net:
+    driver: bridge

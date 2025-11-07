@@ -1,4 +1,4 @@
-# Load Demo - Демо проект для демонстрации нагрузочного тестирования
+# Load Demo - Демо проект для воркшопа по нагружочному тестированию
 
 Этот проект демонстрирует простую микросервисную архитектуру на Go
 
@@ -10,32 +10,10 @@
 2. **API Gateway** (`cmd/api-gateway`) - шлюз для маршрутизации запросов к микросервисам
 3. **PostgreSQL** - база данных для хранения данных пользователей
 
-## Структура проекта
-
-```
-load-demo/
-├── cmd/
-│   ├── user-service/       # Микросервис пользователей
-│   │   ├── main.go
-│   │   ├── internal/
-│   │   │   ├── database/   # Подключение к БД
-│   │   │   ├── handlers/   # HTTP handlers
-│   │   │   └── models/     # Модели данных
-│   │   ├── Dockerfile
-│   │   └── go.mod
-│   └── api-gateway/        # API Gateway
-│       ├── main.go
-│       ├── Dockerfile
-│       └── go.mod
-├── migrations/              # SQL миграции
-├── docker-compose.yml       # Оркестрация сервисов
-└── README.md
-```
-
 ## Требования
 
 - Docker и Docker Compose
-- Go 1.21+ (для локальной разработки)
+- Go 1.24+ (для локальной разработки)
 
 ## Быстрый старт
 
@@ -45,18 +23,22 @@ load-demo/
 cd load-demo
 ```
 
-2. **Создайте файл `.env` на основе `.env.example`:**
+2. **Создайте файл `.env` со следующими переменными:**
 
 ```bash
-cp .env.example .env
-```
+POSTGRES_USER=
+DB_PASSWORD=
+DB_NAME=
 
-Отредактируйте `.env` при необходимости.
+GF_SECURITY_ADMIN_USER=
+GF_SECURITY_ADMIN_PASSWORD=
+```
+заполните переменные значениями
 
 3. **Запустите все сервисы через Docker Compose:**
 
 ```bash
-docker-compose up --build
+make app-up
 ```
 
 4. **Проверьте работу сервисов:**
@@ -116,60 +98,6 @@ curl -X PUT http://localhost:8080/api/users/1 \
 curl -X DELETE http://localhost:8080/api/users/1
 ```
 
-## Локальная разработка
-
-Для разработки без Docker:
-
-1. **Запустите PostgreSQL:**
-
-```bash
-docker run -d \
-  --name postgres-dev \
-  -e POSTGRES_USER=demo_user \
-  -e POSTGRES_PASSWORD=demo_password \
-  -e POSTGRES_DB=demo_db \
-  -p 5432:5432 \
-  postgres:15-alpine
-```
-
-2. **Запустите User Service:**
-
-```bash
-cd cmd/user-service
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USER=demo_user
-export DB_PASSWORD=demo_password
-export DB_NAME=demo_db
-export SERVER_PORT=8081
-go run main.go
-```
-
-3. **Запустите API Gateway:**
-
-```bash
-cd cmd/api-gateway
-export USER_SERVICE_URL=http://localhost:8081
-export SERVER_PORT=8080
-go run main.go
-```
-
-## Переменные окружения
-
-### User Service
-
-- `DB_HOST` - хост PostgreSQL (по умолчанию: localhost)
-- `DB_PORT` - порт PostgreSQL (по умолчанию: 5432)
-- `DB_USER` - пользователь БД (по умолчанию: demo_user)
-- `DB_PASSWORD` - пароль БД (по умолчанию: demo_password)
-- `DB_NAME` - имя БД (по умолчанию: demo_db)
-- `SERVER_PORT` - порт сервиса (по умолчанию: 8081)
-
-### API Gateway
-
-- `USER_SERVICE_URL` - URL User Service (по умолчанию: http://localhost:8081)
-- `SERVER_PORT` - порт шлюза (по умолчанию: 8080)
-
 ## Остановка сервисов
 
 ```bash
@@ -179,8 +107,46 @@ docker-compose down
 Для полной очистки (включая volumes):
 
 ```bash
-docker-compose down -v
+make app-stop
 ```
 
-### Мониторинг
-В проекте настроен экспорт метрик в prometheus
+## Воркшоп
+
+### Метрики нагрузочного тестирования
+Эта часть включает в себя следующее:
+- Разбор конфигурации демо сервиса
+- Разбор конфигарации мониторинга
+- Запуск сервисов мониторинга
+- Импорт Grafana дашборда
+- Настройка Grafana dashboard
+- Рассмотрение типов метрик
+- Взаимодействие с сервисом и отслеживание метрик
+
+Заметки:
+
+запуск/проверка доступности сервисов мониторинга:
+```bash
+make mon-up
+```
+
+Перейти в Grafana
+```
+http://localhost:3000
+```
+- добавить DS к viktoria-metrics
+```bash
+http://victoria-metrics:8428
+```
+
+
+### Тестирование
+
+- Выбор профиля нагрузки
+- Выбор инструмента (k6, locust)
+- Подготовка дашборда для мониторинга
+- Запуск первого теста и отдалдка
+- Составление профиля нагрузки
+- Запуска теста и анализ результата
+
+Заметки:
+К профилю нагрузки нужно заранее определить требования 
